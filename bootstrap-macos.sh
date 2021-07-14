@@ -114,3 +114,13 @@ if [[ -f $DIR/dev/.editorconfig ]]; then
 fi
 
 source ~/.bash_profile
+
+echo
+echo "Dot files bootstrapping complete!"
+echo
+read -p "Some changes may require restarting your computer. Restart now? (y/n) " -n 1
+echo
+
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  sudo shutdown -r now
+fi
