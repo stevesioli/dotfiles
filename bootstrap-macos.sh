@@ -81,6 +81,7 @@ ln -s "$DIR/home/.bash_profile.MACOS" ~/.bash_profile
 ln -s ~/.bash_profile ~/.profile
 ln -s ~/.bash_profile ~/.bashrc
 ln -s "$DIR/home/.inputrc" ~/.inputrc
+ln -s "$DIR/home/.vimrc" ~/.vimrc
 ln -s "$DIR/home/.aliases" ~/.dotfiles/aliases
 ln -s "$DIR/home/.aliases.MACOS" ~/.dotfiles/aliases.MACOS
 ln -s "$DIR/home/.functions" ~/.dotfiles/functions
