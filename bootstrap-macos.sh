@@ -75,6 +75,7 @@ if [[ ! -d $HOME/.dotfiles ]]; then
   mkdir -p $HOME/.dotfiles
 fi
 
+echo
 echo "Linking dot files..."
 
 ln -s "$DIR/home/.bash_profile.MACOS" ~/.bash_profile
@@ -86,9 +87,11 @@ ln -s "$DIR/home/.aliases" ~/.dotfiles/aliases
 ln -s "$DIR/home/.aliases.MACOS" ~/.dotfiles/aliases.MACOS
 ln -s "$DIR/home/.functions" ~/.dotfiles/functions
 ln -s "$DIR/dev/.gitconfig" ~/.gitconfig
+ln -s "$DIR/dev/.gitignore_global" ~/.gitignore_global
 ln -s "$DIR/dev/.gitprompt" ~/.gitprompt
 
 if [[ -f $DIR/dev/.editorconfig ]]; then
+  echo
   read -p "Detected '.editorconfig' file. Do you wish to install it? (y/n) " -n 1
   echo
 
