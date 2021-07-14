@@ -1,19 +1,20 @@
 # ---------------------------------------------------------------------------
 #
-# File: .aliases
-# Author: Erik J. Waibel
-# Description: This file holds all my OSX BASH aliases. Add this file to your
+# File: .aliases.MACOS
+# Author: Steve Sioli
+# Description: This file holds all my MacOS BASH aliases. Add this file to your
 #              home directory and make sure it is sourced in your ~/.bash_profile
-# Last Modified: 04/30/2015
+# Last Modified: 07/13/2021
 #
 # ---------------------------------------------------------------------------
-alias d="cd ~/Documents/Dropbox"
+# enable this if you have Dropbox already installed
+# alias d="cd ~/Documents/Dropbox"
+alias dm="cd ~/Documents"
 alias dl="cd ~/Downloads"
 alias dt="cd ~/Desktop"
 alias dv="cd ~/Developer"
-alias p="cd ~/projects"
 
-# Get OS X Software Updates, and update installed Ruby gems, Homebrew, npm, and their installed packages
+# Get Software Updates, and update installed Ruby gems, Homebrew, npm, and their installed packages
 alias update='brew update && brew upgrade && brew cleanup; sudo npm update -g;'
 
 # Clean up LaunchServices to remove duplicates in the “Open With” menu
@@ -46,10 +47,10 @@ alias spoton="sudo mdutil -a -i on"
 # Stuff I never really use but cannot delete either because of http://xkcd.com/530/
 alias stfu="osascript -e 'set volume output muted true'"
 alias pumpitup="osascript -e 'set volume 7'"
-alias hax="growlnotify -a 'Activity Monitor' 'System error' -m 'WTF R U DOIN'"
+# alias hax="growlnotify -a 'Activity Monitor' 'System error' -m 'WTF R U DOIN'"
 
 # Lock the screen (when going AFK)
-alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
+# alias afk="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
 
 # Add alias for Git to remove server messages
-alias git="2> >(grep -v '|.*|\|+.*+') git"
+# alias git="2> >(grep -v '|.*|\|+.*+') git"

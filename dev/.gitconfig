@@ -1,0 +1,70 @@
+[user]
+	name = Steve Sioli
+	email = steve.m@sioli.com
+
+[core]
+    autocrlf = false
+    editor = code -nw
+    excludesfile = ~/.gitignore_global
+
+[color]
+    diff = auto
+    status = auto
+    branch = auto
+    interactive = auto
+    ui = true
+
+[color "branch"]
+    current = yellow bold
+    local = yellow
+    remote = green
+
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+
+[color "status"]
+    added = green
+    changed = yellow
+    untracked = cyan
+
+[diff]
+    tool = vscode
+
+[difftool]
+    prompt = false
+
+[difftool "vscode"]
+    trustExitCode = true
+    cmd = code -nw --diff \"$LOCAL\" \"$PWD/$REMOTE\"
+
+[merge]
+    tool = vscode
+
+[mergetool]
+    prompt = false
+    keepBackup = false
+
+[mergetool "vscode"]
+    trustExitCode = true
+    cmd = code -nw \"$MERGED\"
+
+[pull]
+	rebase = true
+
+[alias]
+    ci = commit
+    co = checkout
+    br = branch
+    st = status
+    mkbr = checkout -b
+    rbi = rebase -i
+    rmbr = branch -d
+    rmbrf = branch -D
+    sfe = submodule foreach
+    dt = difftool
+    mt = mergetool
+    lg = log --format='%Cred%h%Creset %s %Cgreen(%cr) %C(blue)<%an>%Creset%C(yellow)%d%Creset'
+    lgo = log --oneline

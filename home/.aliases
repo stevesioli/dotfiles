@@ -1,14 +1,26 @@
 # ---------------------------------------------------------------------------
 #
 # File: .aliases
-# Author: Erik J. Waibel
+# Author: Steve Sioli
 # Description: This file holds all my BASH aliases. Add this file to your
 #              home directory and make sure it is sourced in your ~/.bash_profile
-# Last Modified: 03/04/2015
+# Last Modified: 07/13/2021
 #
 # ---------------------------------------------------------------------------
-alias zshconfig="subl ~/.zshrc"
-alias envconfig="subl ~/.env"
+
+export BASH_CONFIG=$HOME/.bashrc
+
+if [ ! -f $HOME/.bashrc ]
+then
+    BASH_CONFIG=$HOME/.bash_profile
+fi
+
+EDIT_CONFIG = "code -nw";
+
+alias bashconfig="$EDIT_CONFIG $BASH_CONFIG && source $BASH_CONFIG"
+alias zshconfig="$EDIT_CONFIG ~/.zshrc"
+alias envconfig="$EDIT_CONFIG ~/.env"
+
 #--------------------------------------------
 # Aliases and this file:
 #--------------------------------------------
@@ -106,6 +118,9 @@ alias whois="whois -h whois-servers.net"
 # Flush Directory Service cache
 alias flush="dscacheutil -flushcache"
 
+# Flush DNS lookup
+alias cleardns="killall -HUP mDNSResponder; sleep 2;"
+
 # Change MAC address (assumes macchanger installed)
 alias changemac="ifconfig eth0 down && macchanger -m 00:AA:11:BB:22:CC eth0 && ifconfig eht0 up"
 
@@ -158,17 +173,6 @@ alias chromekill="ps ux | grep '[C]hrome Helper --type=renderer' | grep -v exten
 # Reload the shell (i.e. invoke as a login shell)
 alias reload="exec $SHELL -l"
 
-#-----------------
-# SVN:
-#-----------------
-alias sci="svn ci"
-alias sco="svn co"
-alias ssw="svn switch"
-alias sre="svn revert -R"
-alias sst="svn status"
-alias sdf="svn diff"
-alias sup="svn up"
-
 #------------
 # Git:
 #------------
@@ -181,3 +185,7 @@ alias gk="gitk --all&"
 alias gx="gitx --all"
 alias gpa='/usr/bin/find . -type d -name .git -exec sh -c "cd \"{}\"/../ && pwd && git pull" \;'
 
+alias cl=clear
+
+# development aliases
+alias repos='cd ~/Developer/repos'

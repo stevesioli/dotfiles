@@ -1,0 +1,19 @@
+# OS system files
+.DS_Store
+
+# VS Code
+.vscode
+
+# IntelliJ
+.idea
+*.iml
+out
+
+# Builds
+build
+
+# Merge backup files
+*.orig
+
+# rbenv settings
+.ruby-version
