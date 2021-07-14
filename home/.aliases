@@ -15,11 +15,9 @@ then
     BASH_CONFIG=$HOME/.bash_profile
 fi
 
-EDIT_CONFIG = "code -nw";
-
-alias bashconfig="$EDIT_CONFIG $BASH_CONFIG && source $BASH_CONFIG"
-alias zshconfig="$EDIT_CONFIG ~/.zshrc"
-alias envconfig="$EDIT_CONFIG ~/.env"
+alias bashconfig="vi $BASH_CONFIG && source $BASH_CONFIG"
+alias zshconfig="vi ~/.zshrc"
+alias envconfig="vi ~/.env"
 
 #--------------------------------------------
 # Aliases and this file:
