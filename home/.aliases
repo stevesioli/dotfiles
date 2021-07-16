@@ -23,7 +23,7 @@ alias envconfig="vi ~/.env"
 # Aliases and this file:
 #--------------------------------------------
 # showa: to remind yourself of an alias (given some part of it)
-showa () { /usr/bin/grep -i -a1 $@ ~/.aliases | grep -v '^\s*$' ; }
+showa () { /usr/bin/grep -i -a1 $@ ~/.dotfiles/aliases | grep -v '^\s*$' ; }
 
 #-----------------------
 # Navigation:
