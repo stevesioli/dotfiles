@@ -10,17 +10,18 @@ which -s brew
 if [[ $? != 0 ]]; then
     echo "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-    # Homebrew gathers anonymous aggregated user behavior analytics and reports these to Google Analytics. It is recommended that you choose to opt out
-    # See https://github.com/Homebrew/brew/blob/master/docs/Analytics.md for the detail.
-    brew analytics off
-    brew tap homebrew/bundle
-    cd bin/
-    brew bundle
-    cd ..
 else
     echo "Homebrew already installed."
 fi
+
+echo "Installing brew bundle"
+# Homebrew gathers anonymous aggregated user behavior analytics and reports these to Google Analytics. It is recommended that you choose to opt out
+# See https://github.com/Homebrew/brew/blob/master/docs/Analytics.md for the detail.
+brew analytics off
+brew tap homebrew/bundle
+cd bin/
+brew bundle
+cd ..
 
 ###############################################################################
 # MacOS Defaults                                                              #
