@@ -78,10 +78,9 @@ fi
 echo
 echo "Linking dot files..."
 
-ln -s "$DIR/home/.bash_profile.MACOS" ~/.bash_profile
-ln -s ~/.bash_profile ~/.profile
-ln -s ~/.bash_profile ~/.bashrc
-ln -s "$DIR/home/.inputrc" ~/.inputrc
+ln -s "$DIR/home/.zsh_profile.MACOS" ~/.zsh_profile
+ln -s ~/.zsh_profile ~/.profile
+ln -s ~/.zsh_profile ~/.zshrc
 ln -s "$DIR/home/.vimrc" ~/.vimrc
 ln -s "$DIR/home/.aliases" ~/.dotfiles/aliases
 ln -s "$DIR/home/.aliases.MACOS" ~/.dotfiles/aliases.MACOS
@@ -113,7 +112,7 @@ if [[ -f $DIR/dev/.editorconfig ]]; then
   fi
 fi
 
-source ~/.bash_profile
+source ~/.zsh_profile
 
 echo
 echo "Dot files bootstrapping complete!"
