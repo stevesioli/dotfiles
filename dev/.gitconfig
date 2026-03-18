@@ -38,7 +38,10 @@
 
 [difftool "vscode"]
     trustExitCode = true
-    cmd = code -nw --diff \"$LOCAL\" \"$PWD/$REMOTE\"
+    cmd = code -nw --diff \"$LOCAL\" \"$REMOTE\"
+
+[fetch]
+    prune = true
 
 [merge]
     tool = vscode
@@ -64,7 +67,12 @@
     rmbr = branch -d
     rmbrf = branch -D
     sfe = submodule foreach
+    shg = stash push -S
     dt = difftool
     mt = mergetool
     lg = log --format='%Cred%h%Creset %s %Cgreen(%cr) %C(blue)<%an>%Creset%C(yellow)%d%Creset'
     lgo = log --oneline
+	  pushf = push --force-with-lease
+
+[init]
+	defaultBranch = main

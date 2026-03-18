@@ -17,3 +17,9 @@ build
 
 # rbenv settings
 .ruby-version
+
+# Logging
+*.log
+
+# Local NPM packages
+*.tgz
