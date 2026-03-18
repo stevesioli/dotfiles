@@ -54,3 +54,6 @@ alias pumpitup="osascript -e 'set volume 7'"
 
 # Add alias for Git to remove server messages
 # alias git="2> >(grep -v '|.*|\|+.*+') git"
+
+# Flush DNS cache
+alias flushdns="sudo dscacheutil -flushcache && sudo killall -HUP mDNSResponder"
