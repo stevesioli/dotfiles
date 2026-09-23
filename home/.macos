@@ -4,7 +4,10 @@
 #############################################################
 
 # Disable the sound effects on boot
+# for Intel-based models on an older MacOS
 # sudo nvram SystemAudioVolume=" "
+# for all others
+# sudo nvram StartupMute=%01
 
 # Disable menu bar transparency
 # defaults write NSGlobalDomain AppleEnableMenuBarTransparency -bool false
@@ -50,7 +53,7 @@ defaults write NSGlobalDomain NSWindowResizeTime -float 0.001
 #defaults write NSGlobalDomain NSQuitAlwaysKeepsWindows -bool false
 
 # Restart automatically if the computer freezes
-sudo systemsetup -setrestartfreeze on
+# sudo systemsetup -setrestartfreeze on
 
 # Enable full keyboard access for all controls (e.g. enable Tab in modal dialogs)
 defaults write NSGlobalDomain AppleKeyboardUIMode -int 3
