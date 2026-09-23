@@ -123,10 +123,9 @@ if [[ -f $DIR/dev/.editorconfig ]]; then
   fi
 fi
 
-source ~/.zsh_profile
-
 echo
 echo "Dot files bootstrapping complete!"
+echo "Open a new terminal or run 'exec \$SHELL -l' to load your profile."
 echo
 read -p "Some changes may require restarting your computer. Restart now? (y/n) " -n 1
 echo
