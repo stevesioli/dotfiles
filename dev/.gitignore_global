@@ -23,3 +23,9 @@ build
 
 # Local NPM packages
 *.tgz
+
+# Claude plan documents
+**/plans/*.md
+**/docs/patterns/*.md
+
+**/.claude/settings.local.json
