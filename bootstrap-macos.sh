@@ -6,10 +6,20 @@ echo "$DIR"
 ###############################################################################
 # Homebrew                                                                    #
 ###############################################################################
-which -s brew
-if [[ $? != 0 ]]; then
+# Apple Silicon installs to /opt/homebrew, Intel to /usr/local
+load_brew_env() {
+    if [[ -x /opt/homebrew/bin/brew ]]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [[ -x /usr/local/bin/brew ]]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
+}
+
+load_brew_env
+if ! command -v brew > /dev/null; then
     echo "Installing Homebrew..."
     /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    load_brew_env
 else
     echo "Homebrew already installed."
 fi

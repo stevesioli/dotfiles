@@ -13,13 +13,22 @@
 # 	1. ENVIRONMENT CONFIGURATION
 # 	-------------------------------
 
+    #	Load Homebrew (Apple Silicon: /opt/homebrew, Intel: /usr/local)
+# 	------------------------------------------------------------
+
+    if [ -x /opt/homebrew/bin/brew ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
+
     #	Setup path variables
 # 	------------------------------------------------------------
 
     export PATH=$HOME/bin:$PATH
     export NVM_DIR="$HOME/.nvm"
-      [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
-      [ -s "/usr/local/opt/nvm/etc/bash_completion" ] && . "/usr/local/opt/nvm/etc/bash_completion"  # This loads nvm bash_completion
+      [ -s "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" ] && . "$HOMEBREW_PREFIX/opt/nvm/nvm.sh"  # This loads nvm
+      [ -s "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion" ] && . "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion"  # This loads nvm bash_completion
 
 # 	Set terminal colors
 # 	------------------------------------------------------------
@@ -35,11 +44,11 @@
 # 	bash git completion
 # 	------------------------------------------------------------
 
-    [[ -r "/usr/local/etc/profile.d/bash_completion.sh" ]] && . "/usr/local/etc/profile.d/bash_completion.sh"
+    [[ -r "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh" ]] && . "$HOMEBREW_PREFIX/etc/profile.d/bash_completion.sh"
 
-    if [ -f "/usr/local/opt/bash-git-prompt/share/gitprompt.sh" ]; then
-        __GIT_PROMPT_DIR="/usr/local/opt/bash-git-prompt/share"
-        source "/usr/local/opt/bash-git-prompt/share/gitprompt.sh"
+    if [ -f "$HOMEBREW_PREFIX/opt/bash-git-prompt/share/gitprompt.sh" ]; then
+        __GIT_PROMPT_DIR="$HOMEBREW_PREFIX/opt/bash-git-prompt/share"
+        source "$HOMEBREW_PREFIX/opt/bash-git-prompt/share/gitprompt.sh"
     fi
 
 # 	-------------------------------

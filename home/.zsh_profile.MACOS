@@ -13,13 +13,22 @@
 # 	1. ENVIRONMENT CONFIGURATION
 # 	-------------------------------
 
+    #	Load Homebrew (Apple Silicon: /opt/homebrew, Intel: /usr/local)
+# 	------------------------------------------------------------
+
+    if [ -x /opt/homebrew/bin/brew ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+    fi
+
     #	Setup path variables
 # 	------------------------------------------------------------
 
-    export PATH=$HOME/bin:/opt/homebrew/bin:/opt/homebrew:$HOME/.jenv/bin:$MK/cmd:$PATH
+    export PATH=$HOME/bin:$HOME/.jenv/bin:$MK/cmd:$PATH
     export NVM_DIR="$HOME/.nvm"
-      [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"  # This loads nvm
-      # [ -s "/opt/homebrew/opt/nvm/etc/bash_completion" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion"  # This loads nvm bash_completion
+      [ -s "$HOMEBREW_PREFIX/opt/nvm/nvm.sh" ] && . "$HOMEBREW_PREFIX/opt/nvm/nvm.sh"  # This loads nvm
+      # [ -s "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion" ] && . "$HOMEBREW_PREFIX/opt/nvm/etc/bash_completion"  # This loads nvm bash_completion
 
     eval "$(jenv init -)"
 
@@ -37,7 +46,7 @@
 #   pyenv
 #   ------------------------------------------------------------
 
-    [ -s "/opt/homebrew/bin/pyenv" ] && export PATH=$HOME/.pyenv/shims:$PATH
+    [ -s "$HOMEBREW_PREFIX/bin/pyenv" ] && export PATH=$HOME/.pyenv/shims:$PATH
 
     eval "$(pyenv init --path)"
 
@@ -51,8 +60,8 @@
      compinit
     fi
 
-    if [ -f "/opt/homebrew/opt/zsh-git-prompt/zshrc.sh" ]; then
-        source "/opt/homebrew/opt/zsh-git-prompt/zshrc.sh"
+    if [ -f "$HOMEBREW_PREFIX/opt/zsh-git-prompt/zshrc.sh" ]; then
+        source "$HOMEBREW_PREFIX/opt/zsh-git-prompt/zshrc.sh"
 
         ZSH_THEME_GIT_PROMPT_PREFIX=' ['
         ZSH_THEME_GIT_PROMPT_SUFFIX=']'
