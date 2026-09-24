@@ -380,3 +380,151 @@ function removeFromPath() {
 function gitBranchAge() {
 	for branch in `git branch -r | grep -v HEAD`;do echo -e `git show --format="%ci %cr" $branch | head -n 1` \\t$branch; done | sort -r
 }
+# Custom Bash functions
+
+# Lists local branches with merged pull requests.
+# For each local branch (excluding main, master, develop), queries GitHub for merged PRs.
+# Usage: git-pr-merged [-v]
+# Options:
+#   -v    Verbose mode: shows PR number, title, and merge date
+#         Default: shows only branch names
+# Examples:
+#   git-pr-merged              # List merged branches (names only)
+#   git-pr-merged -v           # List with PR details
+#   git-pr-merged | git-delete-branch -r  # Delete merged remote branches
+git-pr-merged() {
+  command -v gh >/dev/null 2>&1 || { echo "Error: gh CLI is required" >&2; return 1; }
+  git rev-parse --git-dir >/dev/null 2>&1 || { echo "Error: not a git repository" >&2; return 1; }
+
+  local verbose=0
+  local OPTIND opt
+
+  while getopts "v" opt; do
+    case "$opt" in
+      v) verbose=1;;
+      *) echo "Usage: git-pr-merged [-v]" >&2; return 1;;
+    esac
+  done
+
+  local merged=()
+
+  while IFS= read -r branch; do
+    local pr
+    pr=$(gh pr list --head "$branch" --state merged \
+      --json number,title,mergedAt --limit 1 \
+      --jq '.[0] // empty' 2>/dev/null)
+    [ -z "$pr" ] && continue
+    if [ "$verbose" -eq 1 ]; then
+      local pr_num pr_title merged_at
+      pr_num=$(jq -r '.number' <<< "$pr")
+      pr_title=$(jq -r '.title' <<< "$pr")
+      merged_at=$(jq -r '.mergedAt[0:10]' <<< "$pr")
+      merged+=("$(printf "%s (PR #%s: %s, merged %s)" "$branch" "$pr_num" "$pr_title" "$merged_at")")
+    else
+      merged+=("$branch")
+    fi
+  done < <(git for-each-ref --format='%(refname:short)' refs/heads | grep -Ev "^(main|master|develop)$")
+
+  [ ${#merged[@]} -eq 0 ] && { echo "No merged branches found." >&2; return 0; }
+
+  printf '%s\n' "${merged[@]}"
+}
+
+# Lists git branches by last commit age.
+# Finds branches without recent commits (stale branches) and displays them with age and author.
+# Excludes protected branches: main, master, develop.
+# Usage: git-stale-branches [-r] [-d days]
+# Options:
+#   -r          Check remote branches (refs/remotes) instead of local (default: local)
+#   -d days     Threshold age in days (default: 30)
+# Output format: branch_name (age in years/months/days) by author_name <email>
+# Examples:
+#   git-stale-branches              # List local branches stale for 30+ days
+#   git-stale-branches -r           # List remote branches stale for 30+ days
+#   git-stale-branches -d 60        # List local branches stale for 60+ days
+#   git-stale-branches | git-delete-branch  # Interactively delete stale branches
+git-stale-branches() {
+  local ref_type="refs/heads"  # default local branches
+  local days_threshold=30
+  local OPTIND opt
+
+  # parse options
+  while getopts "rd:" opt; do
+    case "$opt" in
+      r) ref_type="refs/remotes";;
+      d) days_threshold="$OPTARG";;
+      *) echo "Usage: git-stale-branches [-r] [-d days]" >&2; return 1;;
+    esac
+  done
+
+  # get current timestamp
+  local now
+  now=$(date +%s)
+
+  git for-each-ref --format='%(refname:short)|%(committerdate:unix)|%(authorname)|%(authoremail)' "$ref_type" \
+  | awk -F'|' -v now="$now" -v days="$days_threshold" '
+      {
+        # strip origin/ prefix if remote branch
+        sub(/^origin\//, "", $1)
+        age_days = int((now - $2) / 86400)
+        # exclude protected branches and filter by days threshold
+        if (age_days >= days && $1 != "main" && $1 != "master" && $1 != "develop") {
+          print $2 "|" $1 "|" age_days "|" $3 "|" $4
+        }
+      }
+  ' \
+  | sort -n -t'|' -k1,1 \
+  | awk -F'|' '
+      function plural(n, unit) { return n " " unit (n == 1 ? "" : "s") }
+      function human_age(days) {
+        if (days >= 365) return plural(int(days/365), "year")
+        if (days >= 30)  return plural(int(days/30),  "month")
+        return plural(days, "day")
+      }
+      { printf "%s (%s) by %s <%s>\n", $2, human_age($3), $4, $5 }'
+}
+
+# Interactively deletes git branches with confirmation prompt.
+# Reads branch names from stdin (typically piped from git-pr-merged or git-stale-branches).
+# Displays each branch name and prompts user before deletion.
+# Usage: <branch_list_command> | git-delete-branch [-r]
+# Options:
+#   -r    Delete remote branches (git push origin --delete)
+#         Default: Delete local branches (git branch -D)
+# Examples:
+#   git-stale-branches | git-delete-branch        # Interactively delete stale local branches
+#   git-stale-branches -r | git-delete-branch -r  # Interactively delete stale remote branches
+#   git-pr-merged | git-delete-branch             # Interactively delete merged local branches
+git-delete-branch() {
+  while read -r branch; do
+    echo "$branch" >/dev/tty
+    branch=$(echo "$branch" | cut -d' ' -f1)
+    if [[ -n "$branch" ]]; then
+
+      while true; do
+        printf "Delete branch '%s'? [Yes/No] " "$branch" >/dev/tty
+        read -r confirm </dev/tty
+
+        case "$confirm" in
+          [Yy]es)
+            if [[ "$1" == "-r" ]]; then
+              git push origin --delete "$branch"
+              echo "Deleted remote branch: $branch" >/dev/tty
+            else
+              git branch -D "$branch"
+              echo "Deleted local branch: $branch" >/dev/tty
+            fi
+            break
+            ;;
+          [Nn]o)
+            echo "Skipped branch: $branch" >/dev/tty
+            break
+            ;;
+          *)
+            echo "Please enter 'Yes' or 'No'." >/dev/tty
+            ;;
+        esac
+      done
+    fi
+  done
+}
