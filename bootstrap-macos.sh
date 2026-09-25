@@ -17,20 +17,20 @@ fi
 ###############################################################################
 # OSX Defaults                                                                #
 ###############################################################################
-read -p "Do you want to update OSX defaults? " -n 1
+read -p "Do you want to update MacOS defaults? " -n 1
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-	if [ -f ~/.osx ]; then
-		mv ~/.osx ~/.osx.BAK
+	if [ -f ~/.macos ]; then
+		mv ~/.macos ~/.macos.BAK
 	fi
-	ln -s "$DIR/home/.osx" ~/.osx
+	ln -s "$DIR/home/.macos" ~/.macos
 
-	source ~/.osx
+	source ~/.macos
 fi
 
 echo -e "Linking home files..."
-ln -s "$DIR/home/.bash_profile.OSX" ~/.bash_profile
-ln -s "$DIR/home/.aliases.OSX" ~/.aliases.OSX
+ln -s "$DIR/home/.bash_profile.MACOS" ~/.bash_profile
+ln -s "$DIR/home/.aliases.MACOS" ~/.aliases.MACOS
 ln -s ~/.bash_profile ~/.profile
 ln -s ~/.bash_profile ~/.bashrc
 ln -s "$DIR/home/.aliases" ~/.aliases

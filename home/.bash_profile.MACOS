@@ -73,7 +73,7 @@
 # 	2. ACTIVATE ADDITIONAL FILES
 # 	-------------------------------
 	source ~/.aliases
-	source ~/.aliases.OSX
+	source ~/.aliases.MACOS
 	source ~/.functions
 	source ~/.work-aliases
 
