@@ -459,7 +459,8 @@ git-pr-merged() {
 # Options:
 #   -r          Check remote branches (refs/remotes) instead of local (default: local)
 #   -d days     Threshold age in days (default: 30)
-# Output format: branch_name (age in years/months/days) by author_name <email>
+# Output format: branch_name <age> ago by author_name <email>
+#   e.g. feature/ABC-123 2 months ago by Jane Doe <jane.doe@example.com>
 # Examples:
 #   git-stale-branches              # List local branches stale for 30+ days
 #   git-stale-branches -r           # List remote branches stale for 30+ days
@@ -483,6 +484,12 @@ git-stale-branches() {
   local now
   now=$(date +%s)
 
+  # Colorize output only on a terminal so piped branch names stay plain
+  local yellow="" blue="" green="" reset=""
+  if [ -t 1 ]; then
+    yellow=$'\e[33m' blue=$'\e[34m' green=$'\e[32m' reset=$'\e[0m'
+  fi
+
   git for-each-ref --format='%(refname:short)|%(committerdate:unix)|%(authorname)|%(authoremail)' "$ref_type" \
   | awk -F'|' -v now="$now" -v days="$days_threshold" '
       {
@@ -496,14 +503,15 @@ git-stale-branches() {
       }
   ' \
   | sort -n -t'|' -k1,1 \
-  | awk -F'|' '
+  | awk -F'|' -v yellow="$yellow" -v blue="$blue" -v green="$green" -v reset="$reset" '
       function plural(n, unit) { return n " " unit (n == 1 ? "" : "s") }
       function human_age(days) {
         if (days >= 365) return plural(int(days/365), "year")
         if (days >= 30)  return plural(int(days/30),  "month")
         return plural(days, "day")
       }
-      { printf "%s (%s) by %s <%s>\n", $2, human_age($3), $4, $5 }'
+      # %(authoremail) already includes the angle brackets
+      { printf "%s %s %s\n", yellow $2 reset, green (human_age($3) " ago") reset, blue ("by " $4 " " $5) reset }'
 }
 
 # Interactively deletes git branches with confirmation prompt.
