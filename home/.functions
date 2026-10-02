@@ -518,11 +518,26 @@ git-stale-branches() {
 #   git-stale-branches -r | git-delete-branch -r  # Interactively delete stale remote branches
 #   git-pr-merged | git-delete-branch             # Interactively delete merged local branches
 git-delete-branch() {
-  local line branch confirm output
+  local line branch confirm output frame=0 dots="..."
 
   local yellow=$'\e[33m' blue=$'\e[34m' green=$'\e[32m' red=$'\e[31m' grey=$'\e[90m' reset=$'\e[0m'
+  local start_msg="Starting interactive branch deletion"
 
-  printf '\n%s\n' "${blue}Starting interactive branch deletion...${reset}" >/dev/tty
+  printf '\n%s\n' "${blue}${start_msg}${reset}" >/dev/tty
+
+  # Animate the dots until input arrives, since upstream commands (e.g. git-pr-merged -r)
+  # can take a while. zselect waits up to 0.4s for stdin to be readable (data or EOF).
+  # Each frame moves up to redraw the message, then ends with a newline so the cursor
+  # rests on the line below instead of trailing the dots.
+  # zsh only: macOS bash 3.2 has no way to poll stdin, so it shows the static message
+  if [ -n "$ZSH_VERSION" ] && zmodload zsh/zselect 2>/dev/null; then
+    until zselect -t 40 -r 0; do
+      frame=$(( frame % 3 + 1 ))
+      printf '\e[1A\r\e[K%s\n' "${blue}${start_msg}${dots:0:$frame}${reset}" >/dev/tty
+    done
+  fi
+
+  printf '\e[1A\r\e[K%s\n' "${blue}${start_msg}...${reset}" >/dev/tty
 
   while IFS= read -r line; do
     branch=$(echo "$line" | cut -d' ' -f1)
