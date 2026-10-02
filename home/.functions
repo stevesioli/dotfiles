@@ -518,32 +518,45 @@ git-stale-branches() {
 #   git-stale-branches -r | git-delete-branch -r  # Interactively delete stale remote branches
 #   git-pr-merged | git-delete-branch             # Interactively delete merged local branches
 git-delete-branch() {
-  while read -r branch; do
-    echo "$branch" >/dev/tty
-    branch=$(echo "$branch" | cut -d' ' -f1)
+  local line branch confirm output
+
+  local yellow=$'\e[33m' blue=$'\e[34m' green=$'\e[32m' red=$'\e[31m' grey=$'\e[90m' reset=$'\e[0m'
+
+  printf '\n%s\n' "${blue}Starting interactive branch deletion...${reset}" >/dev/tty
+
+  while IFS= read -r line; do
+    branch=$(echo "$line" | cut -d' ' -f1)
     if [[ -n "$branch" ]]; then
 
       while true; do
-        printf "Delete branch '%s'? [Yes/No] " "$branch" >/dev/tty
-        read -r confirm </dev/tty
+        printf "\nDelete branch ${yellow}'%s'${reset}? ${blue}[Yes/No]${reset} " "$branch" >/dev/tty
+        read -r confirm </dev/tty || { echo >/dev/tty; echo "Aborted: unable to read from terminal." >&2; return 1; }
 
         case "$confirm" in
           [Yy]es)
+            # Capture stdout and stderr (git push reports on stderr) so failures can be shown in red
             if [[ "$1" == "-r" ]]; then
-              git push origin --delete "$branch"
-              echo "Deleted remote branch: $branch" >/dev/tty
+              if output=$(git push origin --delete "$branch" 2>&1); then
+                echo "${green}Deleted remote branch: $branch${reset}" >/dev/tty
+              else
+                echo "${red}${output}${reset}" >/dev/tty
+              fi
             else
-              git branch -D "$branch"
-              echo "Deleted local branch: $branch" >/dev/tty
+              # git branch -D reports "Deleted branch <name> (was <sha>)", keeping the sha for recovery
+              if output=$(git branch -D "$branch" 2>&1); then
+                echo "${green}${output}${reset}" >/dev/tty
+              else
+                echo "${red}${output}${reset}" >/dev/tty
+              fi
             fi
             break
             ;;
           [Nn]o)
-            echo "Skipped branch: $branch" >/dev/tty
+            echo "${grey}Skipped branch: $branch${reset}" >/dev/tty
             break
             ;;
           *)
-            echo "Please enter 'Yes' or 'No'." >/dev/tty
+            printf '\n%s\n' "${grey}Please enter ${yellow}'Yes' ${grey}or ${yellow}'No'.${reset}" >/dev/tty
             ;;
         esac
       done
