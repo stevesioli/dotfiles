@@ -382,52 +382,74 @@ function gitBranchAge() {
 }
 # Custom Bash functions
 
-# Lists local branches with merged pull requests.
-# For each local branch (excluding main, master, develop), queries GitHub for merged PRs.
-# Usage: git-pr-merged [-v]
+# Lists branches with merged pull requests.
+# For each branch (excluding main, master, develop), queries GitHub for merged PRs.
+# Usage: git-pr-merged [-r] [-v]
 # Options:
+#   -r    Check branches on origin instead of local branches (queries the remote directly,
+#         so no fetch is needed). Useful for finding branches not deleted after merging on GitHub
 #   -v    Verbose mode: shows PR number, title, and merge date
+#         Output is for reading only and shouldn't be piped into other commands
 #         Default: shows only branch names
 # Examples:
 #   git-pr-merged              # List merged branches (names only)
 #   git-pr-merged -v           # List with PR details
-#   git-pr-merged | git-delete-branch -r  # Delete merged remote branches
+#   git-pr-merged -r           # List merged branches still on origin
+#   git-pr-merged -r | git-delete-branch -r  # Delete merged remote branches
 git-pr-merged() {
   command -v gh >/dev/null 2>&1 || { echo "Error: gh CLI is required" >&2; return 1; }
   git rev-parse --git-dir >/dev/null 2>&1 || { echo "Error: not a git repository" >&2; return 1; }
 
+  local remote=0
   local verbose=0
   local OPTIND opt
 
-  while getopts "v" opt; do
+  while getopts "rv" opt; do
     case "$opt" in
+      r) remote=1;;
       v) verbose=1;;
-      *) echo "Usage: git-pr-merged [-v]" >&2; return 1;;
+      *) echo "Usage: git-pr-merged [-r] [-v]" >&2; return 1;;
     esac
   done
 
+  local found=0
   local merged=()
+  local branch pr pr_num pr_title merged_at
+
+  # Colorize verbose output only on a terminal so piped branch names stay plain
+  local yellow="" blue="" green="" reset=""
+  if [ -t 1 ]; then
+    yellow=$'\e[33m' blue=$'\e[34m' green=$'\e[32m' reset=$'\e[0m'
+  fi
 
   while IFS= read -r branch; do
-    local pr
     pr=$(gh pr list --head "$branch" --state merged \
       --json number,title,mergedAt --limit 1 \
       --jq '.[0] // empty' 2>/dev/null)
     [ -z "$pr" ] && continue
+    found=1
     if [ "$verbose" -eq 1 ]; then
-      local pr_num pr_title merged_at
       pr_num=$(jq -r '.number' <<< "$pr")
       pr_title=$(jq -r '.title' <<< "$pr")
       merged_at=$(jq -r '.mergedAt[0:10]' <<< "$pr")
-      merged+=("$(printf "%s (PR #%s: %s, merged %s)" "$branch" "$pr_num" "$pr_title" "$merged_at")")
+      printf "%s %s %s %s\n" \
+        "${yellow}${branch}:${reset}" "${blue}PR #${pr_num}:${reset}" "$pr_title" "${green}<merged on ${merged_at}>${reset}"
     else
+      # Collect names and print once at the end so downstream commands (e.g. git-delete-branch)
+      # don't start prompting while gh lookups are still running
       merged+=("$branch")
     fi
-  done < <(git for-each-ref --format='%(refname:short)' refs/heads | grep -Ev "^(main|master|develop)$")
+  done < <(
+    if [ "$remote" -eq 1 ]; then
+      git ls-remote --heads origin | sed 's|.*refs/heads/||'
+    else
+      git for-each-ref --format='%(refname:short)' refs/heads
+    fi | grep -Ev "^(main|master|develop)$"
+  )
 
-  [ ${#merged[@]} -eq 0 ] && { echo "No merged branches found." >&2; return 0; }
-
-  printf '%s\n' "${merged[@]}"
+  [ "$found" -eq 0 ] && { echo "No merged branches found." >&2; return 0; }
+  [ ${#merged[@]} -gt 0 ] && printf '%s\n' "${merged[@]}"
+  return 0
 }
 
 # Lists git branches by last commit age.
