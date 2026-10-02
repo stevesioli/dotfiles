@@ -591,3 +591,151 @@ git-delete-branch() {
     fi
   done
 }
+
+# Generates Markdown release notes from package CHANGELOG.md files in a monorepo.
+# Scans packages/*/CHANGELOG.md for a release heading (e.g. "## [1.2.3](...)"),
+# names each package from its package.json (falling back to the directory name),
+# and prints a package index, each package's changelog section, and a Full Changelog link.
+# Must be run from the monorepo root (the directory containing packages/). Requires jq.
+# Usage: generate-release-notes [version] [order...]
+# Arguments:
+#   version     Release version to extract (default: each package's latest release)
+#   order...    Package name substrings controlling output order; unmatched packages go last
+#               (default: the order packages are found in packages/)
+# Examples:
+#   generate-release-notes                              # Latest release of each package
+#   generate-release-notes 2.1.0                        # Only packages released at 2.1.0
+#   generate-release-notes 2.1.0 core ui                # Packages matching "core", then "ui", then the rest
+#   generate-release-notes "" core ui                   # Latest releases with a custom package order
+#   generate-release-notes | pbcopy                     # Copy notes to clipboard
+generate-release-notes() {
+  TARGET_VERSION="$1"
+
+  echo "# 🚀 Latest Release Notes"
+  echo
+  echo "This release contains updates to the following packages:"
+  echo
+
+  [ ! -d "packages" ] && { echo "_No packages directory found._"; return 1; }
+  command -v jq >/dev/null 2>&1 || { echo "Error: jq is required"; return 1; }
+
+  PACKAGES=()
+
+  # First pass: collect packages that actually have a release
+  for FILE in $(find packages -maxdepth 2 -name "CHANGELOG.md" 2>/dev/null); do
+    PACKAGE_DIR=$(dirname "$FILE")
+
+    if [ -f "$PACKAGE_DIR/package.json" ]; then
+      PACKAGE_NAME=$(jq -r '.name // empty' "$PACKAGE_DIR/package.json")
+      [ -z "$PACKAGE_NAME" ] && PACKAGE_NAME=$(basename "$PACKAGE_DIR")
+    else
+      PACKAGE_NAME=$(basename "$PACKAGE_DIR")
+    fi
+
+    if [ -n "$TARGET_VERSION" ]; then
+      grep -qE "^#(#?) \\[?${TARGET_VERSION//./\\.}" "$FILE" || continue
+    else
+      grep -qE '^#(#?) \[?[0-9]+\.[0-9]+\.[0-9]+' "$FILE" || continue
+    fi
+
+    PACKAGES+=("$FILE::$PACKAGE_NAME")
+  done
+
+  [ ${#PACKAGES[@]} -eq 0 ] && {
+    echo "_No packages found with a matching release._"
+    return 1
+  }
+
+  # Re-order packages by name when an order is given (substring match, unmatched go last)
+  if [ $# -gt 1 ]; then
+    ORDER=("${@:2}")
+
+    SORTED=()
+    for ord in "${ORDER[@]}"; do
+      for entry in "${PACKAGES[@]}"; do
+        pkg="${entry##*::}"
+        [[ "$pkg" == *"$ord"* ]] && SORTED+=("$entry") && break
+      done
+    done
+    for entry in "${PACKAGES[@]}"; do
+      pkg="${entry##*::}"
+      matched=0
+      for ord in "${ORDER[@]}"; do
+        [[ "$pkg" == *"$ord"* ]] && matched=1 && break
+      done
+      [ $matched -eq 0 ] && SORTED+=("$entry")
+    done
+    PACKAGES=("${SORTED[@]}")
+  fi
+
+  echo "## 📦 Packages Updated"
+  for entry in "${PACKAGES[@]}"; do
+    pkg="${entry##*::}"
+    anchor=$(echo "$pkg" | tr '[:upper:]' '[:lower:]' | tr ' /' '--')
+    echo "- [\`$pkg\`](#${anchor})"
+  done
+
+  FULL_CHANGELOG_URL=""
+
+  # Second pass: render releases
+  for entry in "${PACKAGES[@]}"; do
+    FILE="${entry%%::*}"
+    PACKAGE_NAME="${entry##*::}"
+
+    if [ -n "$TARGET_VERSION" ]; then
+      START_LINE=$(grep -nE "^#(#?) \\[?${TARGET_VERSION//./\\.}" "$FILE" | head -1 | cut -d: -f1)
+      VERSION="$TARGET_VERSION"
+    else
+      START_LINE=$(grep -nE '^#(#?) \[?[0-9]+\.[0-9]+\.[0-9]+' "$FILE" | head -1 | cut -d: -f1)
+      VERSION_LINE_TEXT=$(sed -n "${START_LINE}p" "$FILE")
+      VERSION=$(echo "$VERSION_LINE_TEXT" | sed -E 's/^#(#?) \[([^]]+)\].*/\2/')
+      [ "$VERSION" = "$VERSION_LINE_TEXT" ] && VERSION=$(echo "$VERSION_LINE_TEXT" | sed -E 's/^#(#?) ([^ ]+).*/\2/')
+    fi
+
+    [ -z "$START_LINE" ] && continue
+
+    # Extract Full Changelog URL from the first package that has a compare link
+    if [ -z "$FULL_CHANGELOG_URL" ]; then
+      VERSION_LINE=$(sed -n "${START_LINE}p" "$FILE")
+      COMPARE_URL=$(echo "$VERSION_LINE" | sed -E 's/^#(#?) \[[^]]+\]\(([^)]+)\).*/\2/')
+      if [ "$COMPARE_URL" != "$VERSION_LINE" ]; then
+        REPO_BASE=$(echo "$COMPARE_URL" | sed -E 's|/compare/.*||')
+        PREV_VERSION=$(echo "$COMPARE_URL" | sed 's/\.\.\..*//' | sed -E 's/.*@//')
+        if [ -n "$REPO_BASE" ] && [ -n "$PREV_VERSION" ]; then
+          FULL_CHANGELOG_URL="${REPO_BASE}/compare/v${PREV_VERSION}...v${VERSION}"
+        fi
+      fi
+    fi
+
+    NEXT_LINE=$(grep -nE '^#(#?) \[?[0-9]+\.[0-9]+\.[0-9]+' "$FILE" \
+      | cut -d: -f1 \
+      | awk -v s="$START_LINE" '$1 > s { print $1; exit }')
+
+    if [ -n "$NEXT_LINE" ]; then
+      SECTION=$(sed -n "${START_LINE},$((NEXT_LINE-1))p" "$FILE")
+    else
+      SECTION=$(sed -n "${START_LINE},\$p" "$FILE")
+    fi
+
+    # Trim only trailing blank lines (awk = macOS safe)
+    SECTION=$(echo "$SECTION" | awk '
+      { lines[NR]=$0 }
+      END {
+        for (i=NR; i>0; i--) {
+          if (lines[i] !~ /^[[:space:]]*$/) break
+          delete lines[i]
+        }
+        for (i=1; i<=NR; i++) if (i in lines) print lines[i]
+      }
+    ')
+
+    echo
+    echo "---"
+    echo "## \`$PACKAGE_NAME\`"
+    echo "$SECTION"
+  done
+
+  echo
+  echo "---"
+  [ -n "$FULL_CHANGELOG_URL" ] && echo "**Full Changelog**: $FULL_CHANGELOG_URL"
+}
