@@ -27,5 +27,6 @@ build
 # Claude plan documents
 **/plans/*.md
 **/docs/patterns/*.md
+**/docs/scratchpad/*.md
 
 **/.claude/settings.local.json
